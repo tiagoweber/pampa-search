@@ -24,7 +24,7 @@ class node:
         self.state = copy.deepcopy(state)
     
 class tree:
-    def __init__(self,problem,cross_revisit_allowed = True):
+    def __init__(self,problem,cross_revisit_allowed = True, strategy="depth-first"):
         self.root_node = node(name="root")
         self.problem = problem
         self.problem.restart()
@@ -35,7 +35,16 @@ class tree:
         self.min_total_cost = 9e99 # min cost so far
         self.cross_revisit_allowed = cross_revisit_allowed
         self.visited_states = []  # list of dictionaries of visited states
+        self.strategy = strategy.lower()
 
+    def navigate_node(self,node):
+        """ directs to the function responsible to return the next_node depending on the chosen strategy/algorithm """
+        if (self.strategy == "depth-first"):
+            return self.navigate_node_depth(node)
+        elif (self.strategy == "breadth-first"):
+            return self.navigate_node_breadth(node)
+        elif (self.strategy == "a-star"):
+            return self.navigate_node_astar(node)
         
     def reset_navigation(self):
         self.current_node = self.root_node
@@ -94,6 +103,7 @@ class tree:
         print("]")
         return path_to_node
 
+        
     def navigate_node_astar(self,node):
         #self.nodes_to_visit.pop(0)
         self.nodes_to_visit.remove(node)

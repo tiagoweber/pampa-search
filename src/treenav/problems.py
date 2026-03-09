@@ -10,11 +10,14 @@
 
 
 import copy
+import pygame
+import pygame_gifs
+
 #**************************************
 #  Sample Problem: Maze
 #**************************************
 class maze():
-    def __init__(self,filename = None):
+    def __init__(self,filename = None,use_pygame=False,record_gif=False,record_name="result.gif"):
         if filename != None:
             self.load_map_from_file(filename)
         else:
@@ -29,7 +32,37 @@ class maze():
                 "board_player_position" : [1,1]
                 }        
         self.restart()
+        self.use_pygame= use_pygame
+        if (self.use_pygame):            
+            self.WHITE = [255, 255, 255]
+            self.BLACK = [0, 0, 0]
+            self.GRAY = [100, 100, 100]
+            self.LIGHT_GRAY = [180, 180, 180]
+            self.BLUE = [0, 0, 255]
+            self.LIGHT_BLUE = [100, 100, 255]
+            self.YELLOW = [150, 150, 0]
+            SIZE = 400
+            nrows = self.board_size[1]
+            ncolumns = self.board_size[1]
+            max_length = max(nrows,ncolumns)            
+            self.pygame_CELL_SIZE = SIZE // max_length
+            XSIZE = self.pygame_CELL_SIZE*nrows
+            YSIZE = self.pygame_CELL_SIZE*ncolumns
 
+            self.SCREEN = pygame.display.set_mode((XSIZE, YSIZE))
+
+            self.border_width = max(int(SIZE/1000),1)
+            pygame.init()
+            self.ever_visited_pos = []
+            self.record_gif = record_gif
+
+            if self.record_gif:
+                self.gf = pygame_gifs.GifRecorder(record_name, XSIZE, YSIZE, threads=8)
+                self.gf.start_recording()
+
+
+
+            
     def load_map_from_file(self,filename):
         self.board_obstacles = []
         i = 0 # map lines
@@ -67,7 +100,7 @@ class maze():
         goal_pos = self.board_goal_position
         manhattan_distance = abs(node_player_pos[0] - goal_pos[0]) + abs(node_player_pos[1] - goal_pos[1])
         #manhattan_distance = 2*abs(node_player_pos[0] - goal_pos[0]) + abs(node_player_pos[1] - goal_pos[1])
-        return 1.1*manhattan_distance
+        return 2*manhattan_distance  # was 1.1
         
     def get_available_actions(self):
         
@@ -98,33 +131,83 @@ class maze():
         
     def print_board(self,visited_path=None):
 
-        print("Current Board Status")
-        print("")
         lines = self.board_size[0]
         columns = self.board_size[1]
 
-        for i in range(0,lines):
-            print("\n|",end="") #first |
-            for j in range(0,columns):
-                #if ([i,j] == self.state["board_player_position"]):
-                #    print("*",end="")
-                if ([i,j] == self.initial_state["board_player_position"]):
-                    print("*",end="")
-                elif ([i,j] == self.board_goal_position):
-                    print("O",end="")
-                elif ([i,j] in self.board_obstacles):
-                    print("#",end="")
-                elif ((visited_path != None) and ([i,j] in visited_path)):
-                    if ([i,j] == visited_path[-1]):
-                        print("%",end="")
+        if (self.use_pygame==False):
+            print("Current Board Status")
+            print("")
+            for i in range(0,lines):
+                print("\n|",end="") #first |
+                for j in range(0,columns):
+                    #if ([i,j] == self.state["board_player_position"]):
+                    #    print("*",end="")
+                    if ([i,j] == self.initial_state["board_player_position"]):
+                        print("*",end="")
+                    elif ([i,j] == self.board_goal_position):
+                        print("O",end="")
+                    elif ([i,j] in self.board_obstacles):
+                        print("#",end="")                        
+                    elif ((visited_path != None) and ([i,j] in visited_path)):
+                        if ([i,j] == visited_path[-1]):
+                            print("%",end="")
+                        else:
+                            print("+",end="")
                     else:
-                        print("+",end="")
-                else:
-                    print(" ",end="")
-                print("|",end="")  # in-line separator |
-        print("")
+                        print(" ",end="")
+                    print("|",end="")  # in-line separator |
+            print("")
+        elif(self.use_pygame):
+            self.SCREEN.fill(self.WHITE)
+            for i in range(0,lines):
+                print("\n|",end="") #first |
+                for j in range(0,columns):
+                    #if ([i,j] == self.state["board_player_position"]):
+                    #    print("*",end="")
+
+                    rect = pygame.Rect(j * self.pygame_CELL_SIZE,
+                                       i * self.pygame_CELL_SIZE,
+                                       self.pygame_CELL_SIZE,
+                                       self.pygame_CELL_SIZE)
+                    
+                    if ([i,j] == self.initial_state["board_player_position"]):
+                        #print("*",end="")
+                        color = self.GRAY
+                    elif ([i,j] == self.board_goal_position):
+                        #print("O",end="")
+                        color = self.YELLOW
+                    elif ([i,j] in self.board_obstacles):
+                        #print("#",end="")
+                        color = self.BLACK
+                    elif ((visited_path != None) and ([i,j] in visited_path)):
+                        if ([i,j] == visited_path[-1]):
+                            #print("%",end="")
+                            color = self.BLUE
+                        else:
+                            #print("+",end="")
+                            color = self.LIGHT_BLUE
+                    elif ([i,j] in self.ever_visited_pos):
+                        color = self.LIGHT_GRAY
+                    else:
+                        #print(" ",end="")
+                        color = self.WHITE
+                    #print("|",end="")  # in-line separator |
+
+                    pygame.draw.rect(self.SCREEN, color, rect)
+                    pygame.draw.rect(self.SCREEN, self.BLACK, rect, self.border_width) # Border
+
+            if self.record_gif:
+                self.gf.upload_frame(self.SCREEN) # Upload the current frame to the recorder
+                
+            pygame.display.flip()
+                    
+            pygame.time.delay(100)
+                    
+                    
+            #print("")
+            
         
-    def print_board_from_node(self,tree,next_node):
+    def print_board_from_node(self,tree,next_node,final=False):
             path_to_node = tree.print_and_get_path_to_node(next_node)
             #print("Visited nodes: %d"%(visited_nodes))
 
@@ -133,6 +216,12 @@ class maze():
                 visited_path.append(node.state["board_player_position"])
 
             self.print_board(visited_path)
+            if ((self.use_pygame) and final):
+                pygame.time.delay(2000)
+                if self.record_gif:
+                    self.gf.stop_recording() # Stop recording and compile the GIF
+
+
                                             
     def move(self,direction):
         """Move piece in the board."""
@@ -159,12 +248,13 @@ class maze():
         if self.state["board_player_position"][1] < 0:
             self.state["board_player_position"][1] = 0
 
-        
+        if ([self.state["board_player_position"][0],self.state["board_player_position"][1]] not in self.ever_visited_pos):
+            self.ever_visited_pos.append([self.state["board_player_position"][0],self.state["board_player_position"][1]])
+            
     def check(self):
 
         # check goal
-        if (self.state["board_player_position"] == self.board_goal_position):
-            #ipdb.set_trace()
+        if (self.state["board_player_position"] == self.board_goal_position):            
             return 1
         else:
             return 0

@@ -1,0 +1,11 @@
+LICENSE
+README.md
+pyproject.toml
+src/pampa-search/__init__.py
+src/pampa-search/module.py
+src/pampa-search/problems.py
+src/pampa_search.egg-info/PKG-INFO
+src/pampa_search.egg-info/SOURCES.txt
+src/pampa_search.egg-info/dependency_links.txt
+src/pampa_search.egg-info/top_level.txt
+tests/test_maze.py

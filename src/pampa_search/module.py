@@ -35,6 +35,8 @@ class tree:
         self.min_total_cost = 9e99 # min cost so far
         self.cross_revisit_allowed = cross_revisit_allowed
         self.visited_states = []  # list of dictionaries of visited states
+        self.visited_states_nodes = [] # list of nodes that were already visited (different from self.visited_nodes, only used for depth so far)
+            
         self.strategy = strategy.lower()
 
     def navigate_node(self,node):
@@ -49,7 +51,7 @@ class tree:
     def reset_navigation(self):
         self.current_node = self.root_node
         self.current_level = 0 # (used in navigation for print only)
-        self.visited_nodes = [] # used for navigation
+        self.visited_nodes = [] # used for navigation (used for depth-first so far)
         self.nodes_to_visit = [self.root_node] # useful only for depth first
         #self.problem.state = self.root_node.state.copy()
         
@@ -341,14 +343,21 @@ class tree:
                 if self.problem.state in self.visited_states:
                     #ipdb.set_trace()
                     cross_visited = True
-                
-            if (not(visited) and not(cross_visited)):
+
+            # check what to do
+            if cross_visited:
+                # check if current visited is better than the previous
+                ipdb.set_trace()
+            
+            elif (not(visited) and not(cross_visited)):
                 
                 self.add_child(name=str(self.child_counter),value=1,is_goal=is_goal_reached, state = self.problem.state)
                 #print("Addition of child for node %s \t action: %s \t child: %s"%(self.current_node.name,action,self.current_node.children[-1]))
                 self.child_counter += 1
                 if not(self.cross_revisit_allowed):
                     self.visited_states.append(copy.deepcopy(self.problem.state))
+                    self.visited_states_nodes.append(self.current_node.children[-1])  # CHECK
+                                                                                
             else:
                 # remove action
                 actions_to_remove.append(action) #can't be directly removed because it is being cycled

@@ -10,8 +10,18 @@
 
 
 import copy
-import pygame
-import pygame_gifs
+
+try:
+    import pygame
+    HAS_PYGAME = True
+except ImportError:
+    HAS_PYGAME = False
+
+try:
+    import pygame_gifs
+    HAS_PYGAME_GIFS = True
+except ImportError:
+    HAS_PYGAME_GIFS  = False    
 
 #**************************************
 #  Sample Problem: Maze
@@ -33,7 +43,11 @@ class maze():
                 }        
         self.restart()
         self.use_pygame= use_pygame
-        if (self.use_pygame):            
+        self.ever_visited_pos = []
+        if (self.use_pygame):
+            if not(HAS_PYGAME):
+                    raise ImportError("Please install 'pygame' to use this feature.")
+                
             self.WHITE = [255, 255, 255]
             self.BLACK = [0, 0, 0]
             self.GRAY = [100, 100, 100]
@@ -53,10 +67,11 @@ class maze():
 
             self.border_width = max(int(SIZE/1000),1)
             pygame.init()
-            self.ever_visited_pos = []
             self.record_gif = record_gif
 
             if self.record_gif:
+                if not(HAS_PYGAME_GIFS):
+                    raise ImportError("Please install 'pygame_gifs' to use this feature.")
                 self.gf = pygame_gifs.GifRecorder(record_name, XSIZE, YSIZE, threads=8)
                 self.gf.start_recording()
 

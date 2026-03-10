@@ -1,7 +1,6 @@
-import pampa-search as ps
+import pampa_search as ps
 import copy
-import pampa-search.problems as problems
-import pygame
+import pampa_search.problems as problems
 
 record_gif = True
 

@@ -18,8 +18,8 @@ def test_solve_default_map():
         test_tree.populate_actions_and_children()
 
         next_node = test_tree.navigate_node_astar(test_tree.current_node)    # also removes current node from nodes_to_visit
-        visited_nodes += 1    
-        #test_tree.print_board_from_node(next_node)    
+        visited_nodes += 1
+
         print("Visited nodes: %d \t Nodes to visit: %d"%(visited_nodes,len(test_tree.nodes_to_visit)))
 
     assert game.check()

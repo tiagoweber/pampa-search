@@ -1,1 +1,1 @@
-pampa-search
+pampa_search

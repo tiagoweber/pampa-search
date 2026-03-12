@@ -10,6 +10,7 @@
 
 
 import copy
+#import ipdb   # only for Debug
 
 try:
     import pygame
@@ -223,7 +224,7 @@ class maze():
             
         
     def print_board_from_node(self,tree,next_node,final=False):
-            path_to_node = tree.print_and_get_path_to_node(next_node)
+            path_to_node = tree.get_path_to_node(next_node)
             #print("Visited nodes: %d"%(visited_nodes))
 
             visited_path = []
@@ -234,6 +235,7 @@ class maze():
             if ((self.use_pygame) and final):
                 pygame.time.delay(2000)
                 if self.record_gif:
+                    #ipdb.set_trace()
                     self.gf.stop_recording() # Stop recording and compile the GIF
 
 

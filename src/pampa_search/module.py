@@ -38,15 +38,17 @@ class tree:
         self.visited_states_nodes = [] # list of nodes that were already visited (different from self.visited_nodes, only used for depth so far)
             
         self.strategy = strategy.lower()
+        self.solved = False
+        
 
     def navigate_node(self,node):
         """ directs to the function responsible to return the next_node depending on the chosen strategy/algorithm """
         if (self.strategy == "depth-first"):
-            return self.navigate_node_depth(node)
+            return self.navigate_node_depth(node), self.solved
         elif (self.strategy == "breadth-first"):
-            return self.navigate_node_breadth(node)
+            return self.navigate_node_breadth(node), self.solved
         elif (self.strategy == "a-star"):
-            return self.navigate_node_astar(node)
+            return self.navigate_node_astar(node), self.solved
         
     def reset_navigation(self):
         self.current_node = self.root_node
@@ -89,20 +91,28 @@ class tree:
             
             next_node = self.navigate_node_astar(node)   # this is the basic function that will be used in other applications
             if next_node.is_goal:
-                return self.print_and_get_path_to_node(next_node)
+                return self.get_path_to_node(next_node,print_path=True)
 
-    def print_and_get_path_to_node(self,next_node):
-        print("Found Goal in node: %s"%next_node.name)
+    def get_path_to_node(self,next_node,print_path=False):
+        if print_path:
+            print("Found Goal in node: %s"%next_node.name)
+            
         path_to_node = self.get_path_to_node(next_node)
-        print("Path: [",end="")
+
+        if print_path:
+            print("Path: [",end="")
         for n in path_to_node:
             if (n.parent != None): # if it is not root
                 action = self.get_action_to_get_to_next_node(n)
             else:
                 action = ""
-            print("node: %s \t state: %s \t from action: %s "%(n.name,n.state,action))
+
+            if print_path:
+                print("node: %s \t state: %s \t from action: %s "%(n.name,n.state,action))
                     
-        print("]")
+        if print_path:
+            print("]")
+            
         return path_to_node
 
         
@@ -117,22 +127,24 @@ class tree:
         if self.nodes_to_visit != []:
             #return self.nodes_to_visit[0]
 
-            costs = self.cost_function_all_nodes_astar()  # later we shall implement a memory so known nodes costs are not recalculated
+            costs = self.cost_function_all_nodes() # has memory so nodes are not recalculated
             node_idx = costs.index(min(costs))      # argmin(costs)
             selected_node = self.nodes_to_visit[node_idx]
             #ipdb.set_trace()
             return selected_node
         ipdb.set_trace()
 
-    def cost_function_all_nodes_astar(self):
+    def cost_function_all_nodes(self):
         costs = []
         self.save_state_backup(self.current_node)        
         for node in self.nodes_to_visit:
-            cost = self.cost_function_astar(node)
+            # important to notice that even for depth-first and breadth first, which are uninformed, this cost calculation is important to decide if a path is "shorter" than the other in the moment of merging them
+            cost = self.cost_function(node) 
+            
             costs.append(cost)
             
         return costs
-
+        
     def save_state_backup(self,node):
         self.node_state_backup = copy.deepcopy(node.state)
         self.current_node = node   # check if it is needed
@@ -140,8 +152,9 @@ class tree:
     def restore_state_backup(self):
         self.problem.state = copy.deepcopy(self.node_state_backup)
         self.current_node.state = copy.deepcopy(self.node_state_backup)        
-        
-    def cost_function_astar(self,node):
+
+
+    def cost_function(self,node):
         #y = self.g(node) + self.h(node)
 
         # find the path to get to this node (put in a node list)
@@ -185,18 +198,20 @@ class tree:
         # #################################################
         # Calculating the estimated cost (hcost)
         # #################################################
-        total_hcost = self.problem.estimate_hcost(node.state)   # will be an estimate based on a function provided by the user
+        if self.strategy == "a-star":
+            total_hcost = self.problem.estimate_hcost(node.state)   # will be an estimate based on a function provided by the user
+        else:
+            total_hcost = 0
 
         self.restore_state_backup()
         
-        
-        node.total_cost = total_gcost + total_hcost
+        node.total_cost = total_gcost + total_hcost  # this should be replaced by user
         
         if node.total_cost < self.min_total_cost:
             self.min_total_cost = node.total_cost   # min_cost will help keep track on where to prune
 
         return node.total_cost
-
+        
     def get_path_to_node(self,node,order="reverse"):
         initial_node = node
         path = [node]  #initially it is bottom-up
@@ -221,13 +236,18 @@ class tree:
             
             next_node = self.navigate_node_breadth(node)   # this is the basic function that will be used in other applications
             if next_node.is_goal:
-                return self.print_and_get_path_to_node(next_node)
+                return self.get_path_to_node(next_node,print_path=True)
 
     def navigate_node_breadth(self,node):
         self.nodes_to_visit.pop(0)
         
         for child in node.children:
             self.nodes_to_visit.append(child)
+            #if child.is_goal:
+            #    self.solved = True
+            #    break
+
+
 
         if self.nodes_to_visit != []:
             return self.nodes_to_visit[0]
@@ -245,7 +265,7 @@ class tree:
             
             next_node = self.navigate_node_depth(node)   # this is the basic function that will be used in other applications
             if next_node.is_goal:
-                return self.print_and_get_path_to_node(next_node)
+                return self.get_path_to_node(next_node,print_path=True)
 
             
     def navigate_node_depth(self,node):
@@ -264,10 +284,13 @@ class tree:
                 if child in self.visited_nodes:
                     pass
                 else:
+                    #if child.is_goal:
+                    #    self.solved = True
                     return child
 
             if (node.parent != None):
                 node = node.parent
+            
             else:
                 stop_criteria = 1
         
@@ -324,7 +347,7 @@ class tree:
             self.problem.move(action)
             
             # create child
-            is_goal_reached = self.problem.check()
+            is_goal_reached = self.problem.check()            
 
             # check if child state is not an already visited state
             visited = False
@@ -341,15 +364,40 @@ class tree:
             # check cross revisit
             if not(self.cross_revisit_allowed):
                 if self.problem.state in self.visited_states:
-                    #ipdb.set_trace()
                     cross_visited = True
 
-            # check what to do
-            if cross_visited:
-                # check if current visited is better than the previous
-                ipdb.set_trace()
+            # ######################
+            # check what to do with cross_visited
+            # ######################
+            # This part is commented because so far it was not necessary and it seems to have a bug
+            # (using a-star: going back in its own path on map 20x20 b)
             
-            elif (not(visited) and not(cross_visited)):
+            # if (cross_visited):
+            #     print("Cross visited")
+            # #     # check if current visited is better than the previous
+            #     cross_visited_index = self.visited_states.index(self.problem.state)
+                
+            #     # Calculating the cost for the memory (cross_visited node) and the current
+            #     # PS.: self.cost_function is already a cost for all the path
+            #     self.save_state_backup(self.current_node)   # NEEDED before using cost_function
+            #     memory_total_cost = self.cost_function(self.visited_states_nodes[cross_visited_index]) 
+            #     current_total_cost = self.cost_function(self.current_node)
+            #     current_total_cost += 1  #self.problem.value   # not yet implemented in problem (cost to move always 1)
+            #                                                    # still ignoring the estimated cost
+                
+            #     if self.strategy == "a-star":
+            #         current_total_cost += self.problem.estimate_hcost(self.problem.state)  #  #(self.current_node.state)
+                    
+            #     if current_total_cost < memory_total_cost:
+            #         # accept the current node as being the one the last one should have used
+            #         print("Current total cost is less than what memory total cost was!")
+
+            #         self.visited_states_nodes[cross_visited_index] = self.current_node                    
+            #         ipdb.set_trace()                  
+            #         # continue as if it was not cross_visited
+            #         cross_visited = False
+            
+            if (not(visited) and not(cross_visited)):
                 
                 self.add_child(name=str(self.child_counter),value=1,is_goal=is_goal_reached, state = self.problem.state)
                 #print("Addition of child for node %s \t action: %s \t child: %s"%(self.current_node.name,action,self.current_node.children[-1]))
@@ -357,6 +405,11 @@ class tree:
                 if not(self.cross_revisit_allowed):
                     self.visited_states.append(copy.deepcopy(self.problem.state))
                     self.visited_states_nodes.append(self.current_node.children[-1])  # CHECK
+
+                if is_goal_reached: # avoid checking other children
+                    self.solved = True
+                    break
+            
                                                                                 
             else:
                 # remove action

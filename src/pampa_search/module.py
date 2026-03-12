@@ -25,6 +25,7 @@ class node:
     
 class tree:
     def __init__(self,problem,cross_revisit_allowed = True, strategy="depth-first"):
+        """ initializes the search tree """
         self.root_node = node(name="root")
         self.problem = problem
         self.problem.restart()
@@ -47,8 +48,9 @@ class tree:
             return self.navigate_node_depth(node), self.solved
         elif (self.strategy == "breadth-first"):
             return self.navigate_node_breadth(node), self.solved
-        elif (self.strategy == "a-star"):
-            return self.navigate_node_astar(node), self.solved
+        else:  # "a-star", "dijkstra" and other non uniform strategies
+            #return self.navigate_node_astar(node), self.solved
+            return self.navigate_node_non_uniform(node), self.solved
         
     def reset_navigation(self):
         self.current_node = self.root_node
@@ -89,7 +91,7 @@ class tree:
                 print("-",end="")
             print(" %s"%node.name)
             
-            next_node = self.navigate_node_astar(node)   # this is the basic function that will be used in other applications
+            next_node = self.navigate_node_non_uniform(node)   # this is the basic function that will be used in other applications
             if next_node.is_goal:
                 return self.get_path_to_node(next_node,print_path=True)
 
@@ -116,7 +118,7 @@ class tree:
         return path_to_node
 
         
-    def navigate_node_astar(self,node):
+    def navigate_node_non_uniform(self,node):
         #self.nodes_to_visit.pop(0)
         self.nodes_to_visit.remove(node)
         # should I make node the "current_node" here? changed nothing
@@ -138,8 +140,8 @@ class tree:
         costs = []
         self.save_state_backup(self.current_node)        
         for node in self.nodes_to_visit:
-            # even as for depth-first and breadth first, which are uninformed, this cost calculation is not used,
-            # it is called anyway to standardize the procedure
+            # in depth-first and breadth first, which are uninformed, this cost calculation is not used,
+            # however, cost_function_all_nodes is only called for non_uniform strategies
             cost = self.cost_function(node) 
             
             costs.append(cost)
@@ -201,6 +203,8 @@ class tree:
         # #################################################
         if self.strategy == "a-star":
             total_hcost = self.problem.estimate_hcost(node.state)   # will be an estimate based on a function provided by the user
+        elif self.strategy == "dijkstra":
+            total_hcost = 0
         else:
             total_hcost = 0
 

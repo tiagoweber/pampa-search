@@ -5,11 +5,14 @@ import pampa_search.problems as problems
 record_gif = True
 
 #strategy = "depth-first"
-strategy = "breadth-first"
-#strategy = "a-star"
-maze_name = "maze_20_20"   # ./maps/maze_20_20.txt"
+#strategy = "breadth-first"
+strategy = "a-star"
+#strategy = "dijkstra"  # in case the problem has all edges with uniform costs, it will perform the same as the breadth-first algorithm
+
+#maze_name = "maze_20_20"   # ./maps/maze_20_20.txt"
 #maze_name = "maze_20_20_b"   # ./maps/maze_20_20.txt"
-#maze_name = "maze_50_50"   # ./maps/maze_20_20.txt"
+maze_name = "maze_50_50"   # ./maps/maze_20_20.txt"
+
 record_name = strategy+"-"+maze_name   
 game = problems.maze("./maps/"+maze_name+".txt",use_pygame=True,record_gif=True,record_name=record_name+".gif")
 

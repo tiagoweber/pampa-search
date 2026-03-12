@@ -176,7 +176,7 @@ class maze():
         elif(self.use_pygame):
             self.SCREEN.fill(self.WHITE)
             for i in range(0,lines):
-                print("\n|",end="") #first |
+                #print("\n|",end="") #first |
                 for j in range(0,columns):
                     #if ([i,j] == self.state["board_player_position"]):
                     #    print("*",end="")
@@ -267,6 +267,10 @@ class maze():
 
         if ([self.state["board_player_position"][0],self.state["board_player_position"][1]] not in self.ever_visited_pos):
             self.ever_visited_pos.append([self.state["board_player_position"][0],self.state["board_player_position"][1]])
+
+        cost_to_move = 1  # so far it is one
+        
+        return cost_to_move
             
     def check(self):
 

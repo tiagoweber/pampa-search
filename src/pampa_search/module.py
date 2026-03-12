@@ -138,7 +138,8 @@ class tree:
         costs = []
         self.save_state_backup(self.current_node)        
         for node in self.nodes_to_visit:
-            # important to notice that even for depth-first and breadth first, which are uninformed, this cost calculation is important to decide if a path is "shorter" than the other in the moment of merging them
+            # even as for depth-first and breadth first, which are uninformed, this cost calculation is not used,
+            # it is called anyway to standardize the procedure
             cost = self.cost_function(node) 
             
             costs.append(cost)
@@ -180,7 +181,7 @@ class tree:
                 last_acc_value = n.acc_value
                 
                 break
-            total_gcost += n.value;
+            total_gcost += n.value; # gets the value of the node (the cost to move there from the previous node)
             temp_list_of_costs.append(n.value)
             index_of_last_acc_value_bottom_up -= 1  # should get to zero if no acc value
 
@@ -344,7 +345,7 @@ class tree:
         for action in self.current_node.actions:
             self.problem_load_state()
             #move 
-            self.problem.move(action)
+            cost_to_move = self.problem.move(action)
             
             # create child
             is_goal_reached = self.problem.check()            
@@ -399,7 +400,7 @@ class tree:
             
             if (not(visited) and not(cross_visited)):
                 
-                self.add_child(name=str(self.child_counter),value=1,is_goal=is_goal_reached, state = self.problem.state)
+                self.add_child(name=str(self.child_counter),value=cost_to_move,is_goal=is_goal_reached, state = self.problem.state)
                 #print("Addition of child for node %s \t action: %s \t child: %s"%(self.current_node.name,action,self.current_node.children[-1]))
                 self.child_counter += 1
                 if not(self.cross_revisit_allowed):
